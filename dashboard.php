@@ -8,35 +8,45 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
+// Check if session variables exist
+$full_name = $_SESSION['full_name'] ?? 'User';
 
 // Fetch spending data by category
-$spending_sql = "SELECT category, SUM(amount) AS total_spent FROM expenses WHERE user_id = ? GROUP BY category";
-$stmt = $conn->prepare($spending_sql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$spending_result = $stmt->get_result();
-
 $categories = [];
 $spent_totals = [];
-while ($row = $spending_result->fetch_assoc()) {
-    $categories[] = $row['category'];
-    $spent_totals[$row['category']] = $row['total_spent'];
+$spending_sql = "SELECT category, SUM(amount) AS total_spent FROM expenses WHERE user_id = ? GROUP BY category";
+$stmt = $conn->prepare($spending_sql);
+if ($stmt) {
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $spending_result = $stmt->get_result();
+
+    while ($row = $spending_result->fetch_assoc()) {
+        $categories[] = $row['category'];
+        $spent_totals[$row['category']] = $row['total_spent'];
+    }
+    $stmt->close();
 }
-$stmt->close();
+
+// If no categories are found, set a default empty array
+if (empty($categories)) {
+    $categories = [];
+}
 
 // Fetch budget data for each category
+$budget_totals = [];
 $budget_sql = "SELECT category, budget FROM budgets WHERE user_id = ?";
 $stmt = $conn->prepare($budget_sql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$budget_result = $stmt->get_result();
+if ($stmt) {
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $budget_result = $stmt->get_result();
 
-$budget_totals = [];
-while ($row = $budget_result->fetch_assoc()) {
-    $budget_totals[$row['category']] = $row['budget'];
+    while ($row = $budget_result->fetch_assoc()) {
+        $budget_totals[$row['category']] = $row['budget'];
+    }
+    $stmt->close();
 }
-$stmt->close();
 
 // Prepare data for the bar chart (Budget vs Spent)
 $chart_data = [];
@@ -52,24 +62,24 @@ foreach ($categories as $category) {
 }
 
 // Fetch daily spending data
-$daily_spending_sql = "SELECT DATE(date) AS date, SUM(amount) AS total_spent FROM expenses WHERE user_id = ? GROUP BY DATE(date) ORDER BY DATE(date) ASC";
-$stmt = $conn->prepare($daily_spending_sql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$daily_result = $stmt->get_result();
-
 $daily_dates = [];
 $daily_spent = [];
-while ($row = $daily_result->fetch_assoc()) {
-    $daily_dates[] = $row['date'];
-    $daily_spent[] = $row['total_spent'];
+$daily_spending_sql = "SELECT DATE(date) AS date, SUM(amount) AS total_spent FROM expenses WHERE user_id = ? GROUP BY DATE(date) ORDER BY DATE(date) ASC";
+$stmt = $conn->prepare($daily_spending_sql);
+if ($stmt) {
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $daily_result = $stmt->get_result();
+
+    while ($row = $daily_result->fetch_assoc()) {
+        $daily_dates[] = $row['date'];
+        $daily_spent[] = $row['total_spent'];
+    }
+    $stmt->close();
 }
-$stmt->close();
 
 ?>
-
 <?php include 'header.php'; ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -77,12 +87,8 @@ $stmt->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-
-    <!-- Font Awesome for icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 
     <style>
@@ -121,139 +127,16 @@ $stmt->close();
             margin-right: 10px;
         }
 
-        /* Top navbar styling */
-        .navbar {
-            background-color: #AEC6D2;
-            color: white;
-            padding: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: fixed;
-            top: 0;
-            left: 250px;
-            right: 0;
-            z-index: 1001;
-        }
-
-        .navbar .notification-icon {
-            font-size: 20px;
-            color: white;
-            cursor: pointer;
-        }
-
-        .navbar .notification-icon:hover {
-            color: #C1E2DB;
-        }
-
+        /* Content Styling */
         .content {
-            margin-top: 60px; /* Adjust for fixed navbar */
             margin-left: 270px;
             padding: 30px;
         }
 
-        /* Card Styling */
-        .card {
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            background-color: #FFFFFF;
-            margin-bottom: 30px;
-        }
-
-        .category-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-        }
-
-        .category-box {
-            background-color: #D1E0DC;
-            padding: 20px;
-            margin: 10px;
-            border-radius: 10px;
-            width: 48%;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .category-box h5 {
-            color: #364C84;
-        }
-
-        .category-box p {
-            font-size: 16px;
-        }
-
-        .category-box .remaining {
-            color: #FF5733;
-            font-weight: bold;
-        }
-
-        .category-box .spent {
-            color: #36A2EB;
-        }
-
-        .category-box .budget {
-            color: #4BC0C0;
-        }
-
-        /* Make the calendar card look good on small screens */
-        .calendar-card {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            max-width: 250px;
-            margin: 20px auto;
-            background-color: #ffffff;
-            border-radius: 12px;
-        }
-
-        #calendar {
-            max-width: 230px;
-            font-size: 14px;
-            margin: 0 auto;
-        }
-
-        .charts-container {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-        }
-
-        .chart-box {
-            width: 48%;
-            margin-top: 20px;
-        }
-
-        .chart-box canvas {
-            background-color: #f5f5f5;
-            border-radius: 12px;
-            padding: 10px;
-        }
-
-        /* Responsive Styling for Mobile */
+        /* Responsive Sidebar for Mobile */
         @media (max-width: 768px) {
-            .content {
-                margin-left: 0;
-                padding: 15px;
-            }
-
-            .category-box {
-                width: 100%;
-                margin-bottom: 20px;
-            }
-
-            .charts-container {
-                flex-direction: column;
-            }
-
-            .chart-box {
-                width: 100%;
-                margin-bottom: 20px;
-            }
-
-            /* Sidebar toggling on mobile */
             .sidebar {
-                position: absolute;
+                position: fixed;
                 transform: translateX(-100%);
                 transition: transform 0.3s ease;
             }
@@ -261,139 +144,126 @@ $stmt->close();
             .sidebar.active {
                 transform: translateX(0);
             }
+
+            .content {
+                margin-left: 0;
+            }
+
+            .menu-toggle {
+                position: fixed;
+                top: 10px;
+                left: 10px;
+                background-color: #AEC6D2;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px;
+                z-index: 1100;
+            }
+
+            .menu-toggle i {
+                font-size: 20px;
+            }
         }
 
-        .navbar {
-            background-color: #AEC6D2;
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
-        .navbar-toggler {
-            border: none;
+        .chart-container canvas {
+            background-color: #f5f5f5;
+            border-radius: 12px;
         }
-
-        .navbar-brand {
-            color: white;
-            font-size: 20px;
-        }
-
     </style>
 </head>
 <body>
 
-    <!-- Navbar for Mobile -->
-    <nav class="navbar navbar-expand-lg navbar-light d-lg-none">
-        <div class="container-fluid">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <span class="navbar-brand">Dashboard</span>
-        </div>
-    </nav>
+    <!-- Mobile Sidebar Toggle Button -->
+    <button class="menu-toggle" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
 
     <!-- Sidebar -->
-    <div class="sidebar" id="mobileSidebar">
-        <h2 class="text-center text-white">Dashboard</h2>
+    <div class="sidebar" id="sidebar">
+        <h2 class="text-center text-white">Students Finance</h2>
         <a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
         <a href="profile.php"><i class="fas fa-user"></i> Profile</a>
         <a href="add_expense.php"><i class="fas fa-plus-circle"></i> Add Expense</a>
         <a href="set_budget.php"><i class="fas fa-wallet"></i> Set Budget</a>
         <a href="reports.php"><i class="fas fa-file-alt"></i> Reports</a>
-        <a href="login.php" class="text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        <a href="logout.php" class="text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
 
-    <!-- Navbar -->
-   
-    <!-- Content -->
+    <!-- Main Content -->
     <div class="content">
-        <div class="welcome-message">
-            Welcome, <?php echo $_SESSION['full_name']; ?>! <br>
-            Here is an overview of your budget and spending.
-        </div>
+        <div class="container">
+            <div class="welcome-message">
+                <h4>Welcome, <?php echo $_SESSION['full_name']; ?>!</h4>
+                <p>Here is an overview of your budget and spending.</p>
+            </div>
 
-        <!-- Category Balance Containers -->
-        <div class="category-container">
-            <?php foreach ($categories as $category) { 
-                $spent = $chart_data[$category]['spent'];
-                $budget = $chart_data[$category]['budget'];
-                $remaining = $chart_data[$category]['remaining'];
-            ?>
-                <div class="category-box">
-                    <h5><?php echo $category; ?></h5>
-                    <p class="spent">Spent: $<?php echo number_format($spent, 2); ?></p>
-                    <p class="budget">Budget: $<?php echo number_format($budget, 2); ?></p>
-                    <p class="remaining">Remaining: $<?php echo number_format($remaining, 2); ?></p>
+            <!-- Budget Summary Section -->
+            <div class="row mb-4">
+                <?php foreach ($categories as $category): 
+                    $spent = $chart_data[$category]['spent'];
+                    $budget = $chart_data[$category]['budget'];
+                    $remaining = $chart_data[$category]['remaining'];
+                ?>
+                <div class="col-md-4">
+                    <div class="card p-3">
+                        <h5><?php echo $category; ?></h5>
+                        <p>Spent: <span class="text-danger">$<?php echo number_format($spent, 2); ?></span></p>
+                        <p>Budget: <span class="text-success">$<?php echo number_format($budget, 2); ?></span></p>
+                        <p>Remaining: <span class="text-warning">$<?php echo number_format($remaining, 2); ?></span></p>
+                    </div>
                 </div>
-            <?php } ?>
-        </div>
-
-        <!-- Charts Section -->
-        <div class="charts-container">
-            <div class="chart-box">
-                <h5>Budget vs Spending Overview</h5>
-                <canvas id="barChart"></canvas>
+                <?php endforeach; ?>
             </div>
-            <div class="chart-box">
-                <h5>Daily Spending Overview</h5>
-                <canvas id="lineChart"></canvas>
+
+            <!-- Chart Section -->
+            <div class="row chart-container">
+                <div class="col-md-6">
+                    <div class="card p-3">
+                        <h5>Budget vs Spending</h5>
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card p-3">
+                        <h5>Daily Spending</h5>
+                        <canvas id="lineChart"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
-
     </div>
 
     <script>
-        $(document).ready(function() {
-            $('#calendar').flatpickr({
-                inline: true,
-                locale: 'en',
-                dateFormat: "Y-m-d",
-            });
-        });
+        // Toggle Sidebar
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
 
-        // Prepare data for Bar Chart
-        const budgetData = <?php echo json_encode($chart_data); ?>;
-        const labels = Object.keys(budgetData);
-        const budgetValues = labels.map(category => budgetData[category].budget);
-        const spentValues = labels.map(category => budgetData[category].spent);
-        const remainingValues = labels.map(category => budgetData[category].remaining);
-
-        const ctx = document.getElementById('barChart').getContext('2d');
-        new Chart(ctx, {
+        // Bar Chart
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        const barData = <?php echo json_encode($chart_data); ?>;
+        new Chart(barCtx, {
             type: 'bar',
             data: {
-                labels: labels,
+                labels: Object.keys(barData),
                 datasets: [
-                    {
-                        label: 'Budget',
-                        data: budgetValues,
-                        backgroundColor: '#36A2EB',
-                    },
-                    {
-                        label: 'Spent',
-                        data: spentValues,
-                        backgroundColor: '#FF6384',
-                    },
-                    {
-                        label: 'Remaining',
-                        data: remainingValues,
-                        backgroundColor: '#4BC0C0',
-                    }
+                    { label: 'Spent', data: Object.values(barData).map(d => d.spent), backgroundColor: '#FF6384' },
+                    { label: 'Budget', data: Object.values(barData).map(d => d.budget), backgroundColor: '#36A2EB' }
                 ]
             },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
+            options: { responsive: true }
         });
 
-        // Prepare data for Line Chart
+        // Line Chart
+        const lineCtx = document.getElementById('lineChart').getContext('2d');
         const dailyDates = <?php echo json_encode($daily_dates); ?>;
         const dailySpent = <?php echo json_encode($daily_spent); ?>;
-
-        const lineCtx = document.getElementById('lineChart').getContext('2d');
         new Chart(lineCtx, {
             type: 'line',
             data: {
@@ -401,22 +271,13 @@ $stmt->close();
                 datasets: [{
                     label: 'Daily Spending',
                     data: dailySpent,
-                    fill: false,
                     borderColor: '#FF5733',
                     tension: 0.1
                 }]
             },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    },
-                },
-            }
+            options: { responsive: true }
         });
     </script>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
