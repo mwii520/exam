@@ -1,22 +1,14 @@
-<?php  
+<?php
 session_start();
 require 'connection.php';
 
+// Check if the user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
 
 $user_id = $_SESSION['user_id'];
-
-// Fetch budgets with currency
-$sql = "SELECT b.category, b.budget, p.currency FROM budgets b
-        LEFT JOIN preferences p ON b.user_id = p.user_id
-        WHERE b.user_id = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$budgets_result = $stmt->get_result();
 
 // Fetch current currency preference
 $currency_query = "SELECT currency FROM preferences WHERE user_id = ?";
@@ -32,12 +24,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $category = $_POST['category'];
         $budget = $_POST['budget'];
 
+        // Insert the budget
         $sql = "INSERT INTO budgets (user_id, category, budget) VALUES (?, ?, ?)";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("iss", $user_id, $category, $budget);
 
         if ($stmt->execute()) {
             $success_msg = "Budget set successfully.";
+
+            // Add notification for the new budget
+            $notification_message = "A new budget for '$category' has been added.";
+            $notification_sql = "INSERT INTO Notifications (user_id, message) VALUES (?, ?)";
+            $notif_stmt = $conn->prepare($notification_sql);
+            $notif_stmt->bind_param("is", $user_id, $notification_message);
+            $notif_stmt->execute();
+            $notif_stmt->close();
         } else {
             $error_msg = "Failed to set budget. Please try again.";
         }
@@ -71,6 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 ?>
+<?php include 'header.php'; ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -95,7 +98,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             height: 100%;
             background-color: #AEC6D2;
             padding-top: 20px;
-            z-index: 1000;
         }
 
         .sidebar a {
@@ -105,16 +107,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             text-decoration: none;
             font-size: 18px;
             margin-bottom: 20px;
-            transition: background-color 0.3s ease;
         }
 
         .sidebar a:hover {
             background-color: #C1E2DB;
             border-radius: 5px;
-        }
-
-        .sidebar i {
-            margin-right: 10px;
         }
 
         .content {
@@ -140,93 +137,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border-color: #C8E6CF;
         }
 
-        table th {
-            background-color: #C1E2DB;
-            color: #fff;
-        }
-
-        table tbody tr:hover {
-            background-color: #f5f5f5;
-        }
-
         .footer {
             text-align: center;
             margin-top: 40px;
             font-size: 14px;
             color: #AEC6D2;
         }
-
-        .hidden {
-            display: none;
-        }
-
-        /* Custom mobile styling */
-        @media (max-width: 768px) {
-            .content {
-                margin-left: 0;
-                padding: 15px;
-            }
-
-            .sidebar {
-                position: absolute;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-            }
-
-            .sidebar.active {
-                transform: translateX(0);
-            }
-
-            .category-box {
-                width: 100%;
-                margin-bottom: 20px;
-            }
-
-            .charts-container {
-                flex-direction: column;
-            }
-
-            .chart-box {
-                width: 100%;
-                margin-bottom: 20px;
-            }
-
-            .navbar {
-                background-color: #AEC6D2;
-            }
-
-            .navbar-toggler {
-                border: none;
-            }
-
-            .navbar-brand {
-                color: white;
-                font-size: 20px;
-            }
-        }
     </style>
 </head>
 <body>
 
-    <!-- Navbar for Mobile -->
-    <nav class="navbar navbar-expand-lg navbar-light d-lg-none">
-        <div class="container-fluid">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <span class="navbar-brand">Dashboard</span>
-        </div>
-    </nav>
-
     <!-- Sidebar -->
-    <div class="sidebar" id="mobileSidebar">
+    <div class="sidebar">
         <h2 class="text-center text-white">Students Finance</h2>
-        <a href="profile.php"><i class="fas fa-user"></i>Profile</a>
-        <a href="dashboard.php"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
-        <a href="add_expense.php"><i class="fas fa-plus-circle"></i>Add Expense</a>
-        <a href="set_budget.php" class="active"><i class="fas fa-dollar-sign"></i>Set Budget</a>
-        <a href="reports.php"><i class="fas fa-chart-line"></i>Reports</a>
-        <a href="login.php" class="text-danger"><i class="fas fa-sign-out-alt"></i>Logout</a>
+        <a href="profile.php"><i class="fas fa-user"></i> Profile</a>
+        <a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="add_expense.php"><i class="fas fa-plus-circle"></i> Add Expense</a>
+        <a href="set_budget.php" class="active"><i class="fas fa-dollar-sign"></i> Set Budget</a>
+        <a href="reports.php"><i class="fas fa-chart-line"></i> Reports</a>
+        <a href="logout.php" class="text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
 
     <!-- Content -->
@@ -283,41 +212,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <button type="submit" class="btn btn-primary w-100">Set Budget</button>
             </form>
         </div>
-
-        <!-- Display Budgets -->
-        <div class="card">
-            <h5>Your Budgets</h5>
-            <button class="btn btn-primary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#budgetOverview" aria-expanded="false" aria-controls="budgetOverview">
-                Show Budget Overview
-            </button>
-            <div class="collapse mt-3" id="budgetOverview">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Category</th>
-                            <th>Budget</th>
-                            <th>Currency</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php while ($row = $budgets_result->fetch_assoc()) { ?>
-                        <tr>
-                            <td><?php echo $row['category']; ?></td>
-                            <td><?php echo $row['budget']; ?></td>
-                            <td><?php echo $row['currency'] ?? $current_currency; ?></td>
-                        </tr>
-                        <?php } ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="footer">
-            <p>&copy; 2024 Students Finance. All rights reserved.</p>
-        </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const currencySelect = document.getElementById('currency');
         const customCurrencyContainer = document.getElementById('customCurrencyContainer');
