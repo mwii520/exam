@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Students Finance Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #F4F6F9;
+            font-family: 'Arial', sans-serif;
+        }
+
+        /* Navbar Styling */
+        .navbar {
+            background-color: #AEC6D2;
+            padding: 15px;
+        }
+
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            margin-right: 20px;
+        }
+
+        .navbar a:hover {
+            color: #FF6F61;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background-image: url('homepage.jpg'); /* Background image */
+            background-size: cover; /* Cover the entire section */
+            background-position: center; /* Center the image */
+            background-repeat: no-repeat; /* Do not repeat the image */
+            text-align: center;
+            padding: 150px 20px;
+            color: #FFFFFF; /* White text for readability */
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7); /* Text shadow for contrast */
+        }
+
+        .hero-section h1 {
+            font-size: 3.5rem;
+            font-weight: bold;
+        }
+
+        .hero-section p {
+            font-size: 1.2rem;
+            margin: 20px 0;
+        }
+
+        .btn-primary {
+            background-color: #B2C5CE;
+            border-color: #B2C5CE;
+            color: white;
+            font-size: 18px;
+            padding: 12px 40px;
+            border-radius: 50px;
+        }
+
+        .btn-primary:hover {
+            background-color: #C8E6CF;
+            border-color: #C8E6CF;
+        }
+
+        /* Features Section */
+        .features-section {
+            padding: 80px 20px;
+        }
+
+        .feature-box {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            margin: 20px;
+            text-align: center;
+        }
+
+        .feature-box i {
+            font-size: 40px;
+            color: #AEC6D2;
+        }
+
+        .feature-box h4 {
+            margin-top: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .feature-box p {
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+
+        /* Footer Section */
+        .footer {
+            background-color: #AEC6D2;
+            padding: 30px 0;
+            text-align: center;
+            color: white;
+        }
+
+        .footer p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-section h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-section p {
+                font-size: 1rem;
+            }
+
+            .feature-box {
+                padding: 30px;
+            }
+
+            .feature-box i {
+                font-size: 30px;
+            }
+
+            .feature-box h4 {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Students Finance</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a href="login.php" class="nav-link">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="signup.php" class="nav-link">Sign Up</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <h1>Take Control of Your Finances</h1>
+        <p>Track your spending, set budgets, and visualize your financial progress. Empower yourself to make smarter financial decisions.</p>
+        <a href="signup.php" class="btn btn-primary mt-4">Get Started</a>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section container">
+        <h2 class="text-center mb-5">Key Features</h2>
+        <div class="row">
+            <!-- Feature 1 -->
+            <div class="col-md-4">
+                <div class="feature-box">
+                    <i class="fas fa-dollar-sign"></i>
+                    <h4>Set Budgets</h4>
+                    <p>Easily set budgets for categories like food, transportation, and entertainment.</p>
+                </div>
+            </div>
+            <!-- Feature 2 -->
+            <div class="col-md-4">
+                <div class="feature-box">
+                    <i class="fas fa-list"></i>
+                    <h4>Track Expenses</h4>
+                    <p>Track your expenses in real-time and make informed decisions to stick to your budget.</p>
+                </div>
+            </div>
+            <!-- Feature 3 -->
+            <div class="col-md-4">
+                <div class="feature-box">
+                    <i class="fas fa-chart-line"></i>
+                    <h4>Visual Analytics</h4>
+                    <p>Get insights into your spending trends and see how you're managing your finances over time.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+    <footer class="footer">
+        <p>&copy; 2024 Students Finance. All rights reserved.</p>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
