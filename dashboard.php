@@ -65,7 +65,10 @@ while ($row = $daily_result->fetch_assoc()) {
     $daily_spent[] = $row['total_spent'];
 }
 $stmt->close();
+
 ?>
+
+<?php include 'header.php'; ?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -118,8 +121,33 @@ $stmt->close();
             margin-right: 10px;
         }
 
-        /* Content styling */
+        /* Top navbar styling */
+        .navbar {
+            background-color: #AEC6D2;
+            color: white;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 250px;
+            right: 0;
+            z-index: 1001;
+        }
+
+        .navbar .notification-icon {
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .navbar .notification-icon:hover {
+            color: #C1E2DB;
+        }
+
         .content {
+            margin-top: 60px; /* Adjust for fixed navbar */
             margin-left: 270px;
             padding: 30px;
         }
@@ -273,17 +301,13 @@ $stmt->close();
         <a href="login.php" class="text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
 
+    <!-- Navbar -->
+   
     <!-- Content -->
     <div class="content">
         <div class="welcome-message">
             Welcome, <?php echo $_SESSION['full_name']; ?>! <br>
             Here is an overview of your budget and spending.
-        </div>
-
-        <!-- Calendar Section -->
-        <div class="card calendar-card">
-            <h5 class="text-center">Your Calendar</h5>
-            <div id="calendar"></div>
         </div>
 
         <!-- Category Balance Containers -->
@@ -302,15 +326,12 @@ $stmt->close();
             <?php } ?>
         </div>
 
-        <!-- Charts Section (Budget vs Spent + Daily Spending Chart) -->
+        <!-- Charts Section -->
         <div class="charts-container">
-            <!-- Bar Chart -->
             <div class="chart-box">
                 <h5>Budget vs Spending Overview</h5>
                 <canvas id="barChart"></canvas>
             </div>
-
-            <!-- Line Chart (Daily Spending) -->
             <div class="chart-box">
                 <h5>Daily Spending Overview</h5>
                 <canvas id="lineChart"></canvas>
