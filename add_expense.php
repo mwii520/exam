@@ -71,6 +71,8 @@ $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
+<?php include 'header.php'; ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
