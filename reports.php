@@ -54,70 +54,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_category']))
         $expenses_stmt->execute();
         $expenses_result = $expenses_stmt->get_result();
     }
+}
 
-    // Generate PDF report
-    if (isset($_POST['generate_pdf'])) {
-        $pdf = new TCPDF();
-        $pdf->SetCreator(PDF_CREATOR);
-        $pdf->SetAuthor('Student Finance');
-        $pdf->SetTitle('Expense Report');
-        $pdf->SetHeaderData('', 0, 'Student Finance - Expense Report', 'Generated on: ' . date('Y-m-d'));
-        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
-        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
-        $pdf->SetMargins(15, 27, 15);
-        $pdf->AddPage();
+// Generate PDF report
+if (isset($_POST['generate_pdf'])) {
+    $pdf = new TCPDF();
+    $pdf->SetCreator(PDF_CREATOR);
+    $pdf->SetAuthor('Student Finance');
+    $pdf->SetTitle('Expense Report');
+    $pdf->SetHeaderData('', 0, 'Student Finance - Expense Report', 'Generated on: ' . date('Y-m-d'));
+    $pdf->setHeaderFont([PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN]);
+    $pdf->setFooterFont([PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA]);
+    $pdf->SetMargins(15, 27, 15);
+    $pdf->AddPage();
 
-        $html = '<h2>Expense and Budget Report</h2>';
-        $html .= '<p><strong>Category:</strong> ' . ($selected_category ?? 'All Categories') . '</p>';
-        $html .= '<table border="1" cellpadding="5">';
-        $html .= '<thead>
-                    <tr>
-                        <th><strong>Category</strong></th>
-                        <th><strong>Amount</strong></th>
-                        <th><strong>Description</strong></th>
-                        <th><strong>Date</strong></th>
-                        <th><strong>Type</strong></th>
-                    </tr>
-                  </thead>';
-        $html .= '<tbody>';
+    $html = '<h2>Expense and Budget Report</h2>';
+    $html .= '<p><strong>Category:</strong> ' . ($selected_category ?? 'All Categories') . '</p>';
+    $html .= '<table border="1" cellpadding="5">';
+    $html .= '<thead>
+                <tr>
+                    <th><strong>Category</strong></th>
+                    <th><strong>Amount</strong></th>
+                    <th><strong>Description</strong></th>
+                    <th><strong>Date</strong></th>
+                    <th><strong>Type</strong></th>
+                </tr>
+              </thead>';
+    $html .= '<tbody>';
 
-        if ($expenses_result->num_rows > 0) {
-            while ($row = $expenses_result->fetch_assoc()) {
-                $html .= '<tr>
-                            <td>' . htmlspecialchars($row['category']) . '</td>
-                            <td>' . number_format($row['amount'], 2) . '</td>
-                            <td>' . htmlspecialchars($row['description'] ?? 'N/A') . '</td>
-                            <td>' . htmlspecialchars($row['date'] ?? 'N/A') . '</td>
-                            <td>' . htmlspecialchars($row['type']) . '</td>
-                          </tr>';
-            }
-        } else {
-            $html .= '<tr><td colspan="5">No records found.</td></tr>';
+    if ($expenses_result->num_rows > 0) {
+        while ($row = $expenses_result->fetch_assoc()) {
+            $html .= '<tr>
+                        <td>' . htmlspecialchars($row['category']) . '</td>
+                        <td>' . number_format($row['amount'], 2) . '</td>
+                        <td>' . htmlspecialchars($row['description'] ?? 'N/A') . '</td>
+                        <td>' . htmlspecialchars($row['date'] ?? 'N/A') . '</td>
+                        <td>' . htmlspecialchars($row['type']) . '</td>
+                      </tr>';
         }
-
-        $html .= '</tbody></table>';
-        $pdf->writeHTML($html, true, false, true, false, '');
-
-        $pdf->Output('Expense_Report.pdf', 'D'); // Download PDF
-        exit();
-    }
-}
-
-// Handle delete request for an expense
-if (isset($_GET['delete_expense_id'])) {
-    $expense_id = $_GET['delete_expense_id'];
-
-    $delete_query = "DELETE FROM expenses WHERE expense_id = ? AND user_id = ?";
-    $delete_stmt = $conn->prepare($delete_query);
-    $delete_stmt->bind_param("ii", $expense_id, $user_id);
-    if ($delete_stmt->execute()) {
-        $delete_msg = "Expense deleted successfully.";
     } else {
-        $delete_msg = "Failed to delete the expense. Please try again.";
+        $html .= '<tr><td colspan="5">No records found.</td></tr>';
     }
-    $delete_stmt->close();
+
+    $html .= '</tbody></table>';
+    $pdf->writeHTML($html, true, false, true, false, '');
+
+    $pdf->Output('Expense_Report.pdf', 'D'); // Download PDF
+    exit();
 }
+
 ?>
+<?php include 'header.php'; ?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -133,7 +120,6 @@ if (isset($_GET['delete_expense_id'])) {
             font-family: 'Arial', sans-serif;
         }
 
-        /* Sidebar Styling */
         .sidebar {
             position: fixed;
             top: 0;
@@ -155,7 +141,7 @@ if (isset($_GET['delete_expense_id'])) {
         }
 
         .sidebar a:hover {
-            background-color: #C1E2DB; /* Soft Light Blue */
+            background-color: #C1E2DB;
             border-radius: 5px;
         }
 
@@ -195,77 +181,18 @@ if (isset($_GET['delete_expense_id'])) {
             background-color: #f5f5f5;
         }
 
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            font-size: 14px;
-            color: #AEC6D2;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        /* Custom mobile styling */
         @media (max-width: 768px) {
             .content {
                 margin-left: 0;
                 padding: 15px;
-            }
-
-            .sidebar {
-                position: absolute;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-            }
-
-            .sidebar.active {
-                transform: translateX(0);
-            }
-
-            .category-box {
-                width: 100%;
-                margin-bottom: 20px;
-            }
-
-            .charts-container {
-                flex-direction: column;
-            }
-
-            .chart-box {
-                width: 100%;
-                margin-bottom: 20px;
-            }
-
-            .navbar {
-                background-color: #AEC6D2;
-            }
-
-            .navbar-toggler {
-                border: none;
-            }
-
-            .navbar-brand {
-                color: white;
-                font-size: 20px;
             }
         }
     </style>
 </head>
 <body>
 
-    <!-- Navbar for Mobile -->
-    <nav class="navbar navbar-expand-lg navbar-light d-lg-none">
-        <div class="container-fluid">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <span class="navbar-brand">Reports</span>
-        </div>
-    </nav>
-
     <!-- Sidebar -->
-    <div class="sidebar" id="mobileSidebar">
+    <div class="sidebar">
         <h2 class="text-center text-white">Students Finance</h2>
         <a href="profile.php"><i class="fas fa-user"></i>Profile</a>
         <a href="dashboard.php"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
@@ -278,10 +205,6 @@ if (isset($_GET['delete_expense_id'])) {
     <!-- Content -->
     <div class="content">
         <h2 class="text-center mt-3">Expense and Budget Reports</h2>
-
-        <?php if (isset($delete_msg)) { ?>
-            <div class="alert alert-success"><?php echo $delete_msg; ?></div>
-        <?php } ?>
 
         <!-- Category Selection Form -->
         <div class="card mb-4">
@@ -299,13 +222,14 @@ if (isset($_GET['delete_expense_id'])) {
                         <?php } ?>
                     </select>
                 </div>
-                <button type="submit" class="btn btn-primary w-100" name="generate_pdf">Download PDF Report</button>
+                <button type="submit" class="btn btn-primary w-100">View Report Overview</button>
             </form>
         </div>
 
         <!-- Expense and Budget Table -->
         <?php if ($expenses_result !== null) { ?>
             <div class="card">
+                <h5>Report Overview for <?php echo htmlspecialchars($selected_category ?? 'All Categories'); ?></h5>
                 <table class="table table-striped">
                     <thead>
                         <tr>
@@ -314,37 +238,32 @@ if (isset($_GET['delete_expense_id'])) {
                             <th>Description</th>
                             <th>Date</th>
                             <th>Type</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if ($expenses_result->num_rows > 0) { 
+                        <?php if ($expenses_result->num_rows > 0) {
                             while ($row = $expenses_result->fetch_assoc()) { ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($row['category']); ?></td>
+                                    <td><?php echo number_format($row['amount'], 2); ?></td>
+                                    <td><?php echo htmlspecialchars($row['description'] ?? 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($row['date'] ?? 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($row['type']); ?></td>
+                                </tr>
+                        <?php }
+                        } else { ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($row['category']); ?></td>
-                                <td><?php echo number_format($row['amount'], 2); ?></td>
-                                <td><?php echo htmlspecialchars($row['description'] ?? 'N/A'); ?></td>
-                                <td><?php echo htmlspecialchars($row['date'] ?? 'N/A'); ?></td>
-                                <td><?php echo htmlspecialchars($row['type']); ?></td>
-                                <td>
-                                    <a href="reports.php?delete_expense_id=<?php echo $row['expense_id']; ?>" 
-                                       class="btn btn-danger btn-sm" 
-                                       onclick="return confirm('Are you sure you want to delete this item?');">
-                                       Delete
-                                    </a>
-                                </td>
-                            </tr>
-                        <?php } } else { ?>
-                            <tr>
-                                <td colspan="6" class="text-center text-muted">No records found.</td>
+                                <td colspan="5" class="text-center text-muted">No records found.</td>
                             </tr>
                         <?php } ?>
                     </tbody>
                 </table>
+                <form method="POST" class="mt-3">
+                    <input type="hidden" name="selected_category" value="<?php echo htmlspecialchars($selected_category); ?>">
+                    <button type="submit" name="generate_pdf" class="btn btn-primary w-100">Download PDF Report</button>
+                </form>
             </div>
         <?php } ?>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
