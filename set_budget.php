@@ -73,8 +73,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 ?>
 <?php include 'header.php'; ?>
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -98,6 +96,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             height: 100%;
             background-color: #AEC6D2;
             padding-top: 20px;
+            z-index: 1000;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.active {
+            transform: translateX(-100%);
         }
 
         .sidebar a {
@@ -114,11 +119,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border-radius: 5px;
         }
 
+        /* Content Styling */
         .content {
             margin-left: 270px;
             padding: 40px;
+            transition: margin-left 0.3s ease;
         }
 
+        .content.full-width {
+            margin-left: 0;
+        }
+
+        /* Card Styling */
         .card {
             border-radius: 12px;
             background-color: #FFFFFF;
@@ -137,18 +149,53 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border-color: #C8E6CF;
         }
 
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            font-size: 14px;
-            color: #AEC6D2;
+        /* Navbar for Mobile */
+        .navbar {
+            background-color: #AEC6D2;
+        }
+
+        .navbar-toggler {
+            border: none;
+        }
+
+        .navbar-brand {
+            color: white;
+            font-size: 20px;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .content {
+                margin-left: 0;
+            }
+
+            .content.full-width {
+                margin-left: 0;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Mobile Sidebar Toggle -->
+    <nav class="navbar navbar-expand-lg navbar-light d-lg-none">
+        <div class="container-fluid">
+            <button class="navbar-toggler" type="button">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <span class="navbar-brand">Set Budgets</span>
+        </div>
+    </nav>
 
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <h2 class="text-center text-white">Students Finance</h2>
         <a href="profile.php"><i class="fas fa-user"></i> Profile</a>
         <a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
@@ -159,27 +206,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 
     <!-- Content -->
-    <div class="content">
-        <?php if (isset($success_msg)) { ?>
-            <div class="alert alert-success"><?php echo $success_msg; ?></div>
-        <?php } ?>
-
-        <?php if (isset($error_msg)) { ?>
-            <div class="alert alert-danger"><?php echo $error_msg; ?></div>
-        <?php } ?>
-
-        <!-- Set Currency Section -->
+    <div class="content" id="content">
         <div class="card">
             <h5>Set Preferred Currency</h5>
             <form method="POST">
                 <div class="mb-3">
                     <label for="currency" class="form-label">Select Currency</label>
                     <select class="form-control" id="currency" name="currency">
-                        <option value="USD" <?php echo $current_currency === 'USD' ? 'selected' : ''; ?>>USD - US Dollar</option>
-                        <option value="EUR" <?php echo $current_currency === 'EUR' ? 'selected' : ''; ?>>EUR - Euro</option>
-                        <option value="GBP" <?php echo $current_currency === 'GBP' ? 'selected' : ''; ?>>GBP - British Pound</option>
-                        <option value="UGX" <?php echo $current_currency === 'UGX' ? 'selected' : ''; ?>>UGX - Ugandan Shilling</option>
-                        <option value="KES" <?php echo $current_currency === 'KES' ? 'selected' : ''; ?>>KES - Kenyan Shilling</option>
+                        <option value="USD">USD - US Dollar</option>
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="GBP">GBP - British Pound</option>
+                        <option value="UGX">UGX - Ugandan Shilling</option>
+                        <option value="KES">KES - Kenyan Shilling</option>
                         <option value="Other">Other</option>
                     </select>
                 </div>
@@ -191,7 +229,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </form>
         </div>
 
-        <!-- Set Budget Section -->
         <div class="card">
             <h5>Set Budget</h5>
             <form method="POST">
@@ -206,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label for="budget" class="form-label">Budget Amount (<?php echo $current_currency; ?>)</label>
+                    <label for="budget" class="form-label">Budget Amount</label>
                     <input type="number" class="form-control" id="budget" name="budget" required>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Set Budget</button>
@@ -216,18 +253,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const currencySelect = document.getElementById('currency');
-        const customCurrencyContainer = document.getElementById('customCurrencyContainer');
-        const customCurrencyInput = document.getElementById('custom_currency');
-
-        currencySelect.addEventListener('change', function () {
-            if (this.value === 'Other') {
-                customCurrencyContainer.classList.remove('hidden');
-                customCurrencyInput.required = true;
-            } else {
-                customCurrencyContainer.classList.add('hidden');
-                customCurrencyInput.required = false;
-            }
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        document.querySelector('.navbar-toggler').addEventListener('click', function () {
+            sidebar.classList.toggle('active');
+            content.classList.toggle('full-width');
         });
     </script>
 </body>
