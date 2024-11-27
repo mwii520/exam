@@ -65,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['profile_picture'])) {
 
 $stmt->close();
 ?>
+<?php include 'header.php'; ?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -304,14 +305,12 @@ $stmt->close();
         <a href="set_budget.php"><i class="fas fa-dollar-sign"></i>Set Budget</a>
         <a href="reports.php"><i class="fas fa-chart-line"></i>Reports</a>
         <a href="login.php" class="text-danger"><i class="fas fa-sign-out-alt"></i>Logout</a>
+
     </div>
+    
 
     <!-- Content -->
     <div class="content">
-        <div class="welcome-message">
-            Welcome, <?php echo $_SESSION['full_name']; ?>! <br>
-            Here is an overview of your budget and spending.
-        </div>
 
         <!-- Profile Header -->
         <div class="card text-center p-4">
@@ -335,6 +334,17 @@ $stmt->close();
                 <div class="info-item"><strong>Date of Birth:</strong> <?php echo htmlspecialchars($user['date_of_birth'] ?? 'N/A'); ?></div>
             </div>
         </div>
+        <div class="container-summary">
+            <div class="summary-box">
+                <h5>Total Income</h5>
+                <p><?php echo number_format($total_budget, 2); ?> UGX</p>
+            </div>
+            <div class="summary-box">
+                <h5>Remaining Budget</h5>
+                <p><?php echo number_format($remaining_budget, 2); ?> UGX</p>
+            </div>
+        </div>
+
 
         <!-- Update Profile Picture -->
         <div class="card text-center p-4">
@@ -348,17 +358,7 @@ $stmt->close();
         </div>
 
         <!-- Summary Section -->
-        <div class="container-summary">
-            <div class="summary-box">
-                <h5>Total Income</h5>
-                <p><?php echo number_format($total_budget, 2); ?> UGX</p>
-            </div>
-            <div class="summary-box">
-                <h5>Remaining Budget</h5>
-                <p><?php echo number_format($remaining_budget, 2); ?> UGX</p>
-            </div>
-        </div>
-
+        
         <!-- Footer -->
         <div class="footer">
             <p>&copy; 2024 Students Finance. All rights reserved.</p>
