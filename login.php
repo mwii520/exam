@@ -42,7 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 $conn->close();
 ?>
 
-<!-- HTML form for the Login page -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,38 +49,36 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #FFFEF6; /* Soft light background */
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #F4F6F9; /* Profile page background color */
+            font-family: 'Arial', sans-serif;
         }
 
         .card {
-            background-color: #AEC6D2; /* Soft Teal */
-            color: #364C84; /* Deep Blue */
             border-radius: 12px;
-            padding: 40px;
+            background-color: #FFFFFF; /* White background for card */
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            margin: 50px auto;
+            padding: 30px;
+            max-width: 500px;
+            margin: 60px auto;
         }
 
         h2 {
-            color: #364C84; /* Deep Blue */
+            color: #364C84; /* Deep blue */
             text-align: center;
             margin-bottom: 30px;
-            font-weight: bold;
         }
 
         .btn-primary {
-            background-color: #5D6D7E; /* Soft Teal */
-            border: none;
-            color: #FFFFFF;
+            background-color: #B2C5CE;
+            border-color: #B2C5CE;
         }
 
         .btn-primary:hover {
-            background-color: #3B4A58; /* Darker Teal on hover */
-            color: #FFFFFF;
+            background-color: #C8E6CF;
+            border-color: #C8E6CF;
         }
 
         .form-label {
@@ -89,18 +86,8 @@ $conn->close();
             font-weight: bold;
         }
 
-        .form-container input,
-        .form-container select,
-        .form-container textarea {
-            border: 1px solid #CBCEEA; /* Soft Lavender */
-            background-color: #FFFFFF;
-            color: #364C84;
-        }
-
-        .form-container input:focus,
-        .form-container select:focus,
-        .form-container textarea:focus {
-            border-color: #364C84; /* Deep Blue */
+        .form-control:focus {
+            border-color: #364C84;
             box-shadow: 0 0 5px rgba(54, 76, 132, 0.5);
         }
 
@@ -108,11 +95,11 @@ $conn->close();
             text-align: center;
             margin-top: 20px;
             font-size: 14px;
-            color: #364C84;
+            color: #AEC6D2;
         }
 
         .footer a {
-            color: #5D6D7E; /* Soft Teal */
+            color: #5D6D7E;
             text-decoration: none;
         }
 
@@ -123,35 +110,37 @@ $conn->close();
 </head>
 <body>
 
-<div class="container card">
-    <h2>Login</h2>
+    <div class="container">
+        <div class="card">
+            <h2><i class="fas fa-user-circle"></i> Login</h2>
 
-    <!-- Display error message -->
-    <?php if ($error_message): ?>
-        <div class="alert alert-danger"><?= $error_message ?></div>
-    <?php endif; ?>
+            <!-- Display error message -->
+            <?php if ($error_message): ?>
+                <div class="alert alert-danger"><?= htmlspecialchars($error_message) ?></div>
+            <?php endif; ?>
 
-    <!-- Login Form -->
-    <form method="POST" action="login.php">
-        <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" name="email" required>
+            <!-- Login Form -->
+            <form method="POST" action="login.php">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Login</button>
+            </form>
+
+            <!-- Link to Signup Page -->
+            <div class="footer mt-4">
+                <p>Don't have an account? <a href="signup.php">Create one</a></p>
+            </div>
         </div>
-
-        <div class="mb-3">
-            <label for="password" class="form-label">Password</label>
-            <input type="password" class="form-control" id="password" name="password" required>
-        </div>
-
-        <button type="submit" class="btn btn-primary w-100">Login</button>
-    </form>
-
-    <!-- Link to Signup Page -->
-    <div class="footer mt-4">
-        <p>Don't have an account? <a href="signup.php">Create one</a></p>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
