@@ -202,7 +202,7 @@ $stmt->close();
 
     <!-- Sidebar -->
     <div class="sidebar" id="mobileSidebar">
-        <h2 class="text-center text-white">Students Finance</h2>
+        <h2 class="text-center text-white">ZOi</h2>
         <a href="profile.php"><i class="fas fa-user"></i> Profile</a>
         <a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
         <a href="add_expense.php"><i class="fas fa-plus-circle"></i> Add Expense</a>
@@ -222,48 +222,58 @@ $stmt->close();
             </div>
 
             <div class="row">
-                <div class="col-md-6">
-                    <!-- Profile Information -->
-                    <div class="card p-4">
-                        <h5>Profile Information</h5>
-                        <div class="info-container">
-                            <div class="info-item mb-3"><strong>Access Number:</strong> <?php echo htmlspecialchars($user['access_number'] ?? 'N/A'); ?></div>
-                            <div class="info-item mb-3"><strong>Registration Number:</strong> <?php echo htmlspecialchars($user['registration_number'] ?? 'N/A'); ?></div>
-                            <div class="info-item mb-3"><strong>Age:</strong> <?php echo htmlspecialchars($user['age'] ?? 'N/A'); ?></div>
-                            <div class="info-item mb-3"><strong>Gender:</strong> <?php echo htmlspecialchars($user['gender'] ?? 'N/A'); ?></div>
-                            <div class="info-item mb-3"><strong>Phone Number:</strong> <?php echo htmlspecialchars($user['phone_number'] ?? 'N/A'); ?></div>
-                            <div class="info-item mb-3"><strong>Address:</strong> <?php echo htmlspecialchars($user['address'] ?? 'N/A'); ?></div>
-                            <div class="info-item mb-3"><strong>Date of Birth:</strong> <?php echo htmlspecialchars($user['date_of_birth'] ?? 'N/A'); ?></div>
-                        </div>
-                    </div>
-                </div>
+            <div class="container-fluid">
+    <!-- Profile Header -->
+    
 
-                <div class="col-md-6">
-                    <!-- Budget Summary -->
-                    <div class="container-summary">
-                        <div class="summary-box">
-                            <h5>Total Income</h5>
-                            <p><?php echo number_format($total_budget, 2); ?> UGX</p>
-                        </div>
-                        <div class="summary-box">
-                            <h5>Remaining Budget</h5>
-                            <p><?php echo number_format($remaining_budget, 2); ?> UGX</p>
-                        </div>
-                    </div>
+    <div class="row g-4">
+        <!-- Profile Information -->
+        <div class="col-lg-6">
+            <div class="card shadow p-4">
+                <h5 class="text-primary mb-3">Profile Information</h5>
+                <div class="info-container">
+                    <div class="info-item mb-3"><strong>Access Number:</strong> <?php echo htmlspecialchars($user['access_number'] ?? 'N/A'); ?></div>
+                    <div class="info-item mb-3"><strong>Registration Number:</strong> <?php echo htmlspecialchars($user['registration_number'] ?? 'N/A'); ?></div>
+                    <div class="info-item mb-3"><strong>Age:</strong> <?php echo htmlspecialchars($user['age'] ?? 'N/A'); ?></div>
+                    <div class="info-item mb-3"><strong>Gender:</strong> <?php echo htmlspecialchars($user['gender'] ?? 'N/A'); ?></div>
+                    <div class="info-item mb-3"><strong>Phone Number:</strong> <?php echo htmlspecialchars($user['phone_number'] ?? 'N/A'); ?></div>
+                    <div class="info-item mb-3"><strong>Address:</strong> <?php echo htmlspecialchars($user['address'] ?? 'N/A'); ?></div>
+                    <div class="info-item mb-3"><strong>Date of Birth:</strong> <?php echo htmlspecialchars($user['date_of_birth'] ?? 'N/A'); ?></div>
                 </div>
-            </div>
-
-            <!-- Update Profile Picture -->
-            <div class="card text-center p-4">
-                <h5>Update Profile Picture</h5>
-                <form action="profile.php" method="POST" enctype="multipart/form-data">
-                    <div class="mb-3">
-                        <input type="file" name="profile_picture" id="profile_picture" class="form-control">
-                    </div>
-                    <button type="submit" class="btn btn-update">Update Picture</button>
-                </form>
             </div>
         </div>
+
+        <!-- Budget Summary -->
+        <div class="col-lg-6">
+            <div class="row g-4">
+                <div class="col-12">
+                    <div class="summary-box shadow p-4">
+                        <h5>Total Income</h5>
+                        <p><?php echo number_format($total_budget, 2); ?> UGX</p>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="summary-box shadow p-4">
+                        <h5>Remaining Budget</h5>
+                        <p><?php echo number_format($remaining_budget, 2); ?> UGX</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Profile Picture -->
+    <div class="card mt-4 shadow text-center p-4">
+        <h5 class="text-primary">Update Profile Picture</h5>
+        <form action="profile.php" method="POST" enctype="multipart/form-data" class="mt-3">
+            <div class="mb-3">
+                <input type="file" name="profile_picture" id="profile_picture" class="form-control">
+            </div>
+            <button type="submit" class="btn btn-update">Update Picture</button>
+        </form>
+    </div>
+</div>
+
     </div>
 
     <!-- Bootstrap JS and dependencies -->
