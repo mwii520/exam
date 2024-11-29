@@ -116,18 +116,26 @@ if (isset($_POST['generate_pdf'])) {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #F4F6F9; /* Same background color as the budget page */
+            background-color: #F4F6F9;
             font-family: 'Arial', sans-serif;
         }
 
+        /* Sidebar Styling */
         .sidebar {
             position: fixed;
             top: 0;
             left: 0;
             width: 250px;
             height: 100%;
-            background-color: #AEC6D2; /* Soft Teal */
+            background-color: #AEC6D2;
             padding-top: 20px;
+            z-index: 1000;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.active {
+            transform: translateX(-100%);
         }
 
         .sidebar a {
@@ -145,13 +153,14 @@ if (isset($_POST['generate_pdf'])) {
             border-radius: 5px;
         }
 
-        .sidebar i {
-            margin-right: 10px;
-        }
-
         .content {
             margin-left: 270px;
             padding: 30px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .content.full-width {
+            margin-left: 0;
         }
 
         .card {
@@ -181,29 +190,61 @@ if (isset($_POST['generate_pdf'])) {
             background-color: #f5f5f5;
         }
 
+        /* Mobile Responsive */
         @media (max-width: 768px) {
             .content {
                 margin-left: 0;
                 padding: 15px;
             }
+
+            .sidebar {
+                position: absolute;
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .navbar {
+                background-color: #AEC6D2;
+            }
+
+            .navbar-toggler {
+                border: none;
+            }
+
+            .navbar-brand {
+                color: white;
+                font-size: 20px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Mobile Sidebar Toggle -->
+    <nav class="navbar navbar-expand-lg navbar-light d-lg-none">
+        <div class="container-fluid">
+            <button class="navbar-toggler" type="button">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <span class="navbar-brand">Reports</span>
+        </div>
+    </nav>
 
     <!-- Sidebar -->
-    <div class="sidebar">
-        <h2 class="text-center text-white">Students Finance</h2>
-        <a href="profile.php"><i class="fas fa-user"></i>Profile</a>
-        <a href="dashboard.php"><i class="fas fa-tachometer-alt"></i>Dashboard</a>
-        <a href="add_expense.php"><i class="fas fa-plus-circle"></i>Add Expense</a>
-        <a href="set_budget.php"><i class="fas fa-dollar-sign"></i>Set Budget</a>
-        <a href="reports.php" class="active"><i class="fas fa-chart-line"></i>Reports</a>
-        <a href="login.php" class="text-danger"><i class="fas fa-sign-out-alt"></i>Logout</a>
+    <div class="sidebar" id="sidebar">
+        <h2 class="text-center text-white">ZOi </h2>
+        <a href="profile.php"><i class="fas fa-user"></i> Profile</a>
+        <a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="add_expense.php"><i class="fas fa-plus-circle"></i> Add Expense</a>
+        <a href="set_budget.php"><i class="fas fa-dollar-sign"></i> Set Budget</a>
+        <a href="reports.php" class="active"><i class="fas fa-chart-line"></i> Reports</a>
+        <a href="login.php" class="text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
 
     <!-- Content -->
-    <div class="content">
+    <div class="content" id="content">
         <h2 class="text-center mt-3">Expense and Budget Reports</h2>
 
         <!-- Category Selection Form -->
@@ -213,6 +254,11 @@ if (isset($_POST['generate_pdf'])) {
                     <label for="selected_category" class="form-label">Category</label>
                     <select name="selected_category" id="selected_category" class="form-control" required>
                         <option value="">-- Select Category --</option>
+                        <option value="Food">Food</option>
+                        <option value="Transportation">Transportation</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Tuition">Tuition</option>
+                        <option value="Other">Other</option>
                         <option value="All" <?php echo ($selected_category === 'All') ? 'selected' : ''; ?>>All Categories</option>
                         <?php while ($category_row = $categories_result->fetch_assoc()) { ?>
                             <option value="<?php echo htmlspecialchars($category_row['category']); ?>" 
@@ -265,5 +311,16 @@ if (isset($_POST['generate_pdf'])) {
             </div>
         <?php } ?>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        document.querySelector('.navbar-toggler').addEventListener('click', function () {
+            sidebar.classList.toggle('active');
+            content.classList.toggle('full-width');
+        });
+    </script>
 </body>
 </html>
+
