@@ -29,11 +29,19 @@ if (isset($_GET['delete_expense_id'])) {
 // Handle adding an expense
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $category = $_POST['category'];
-    $amount = $_POST['amount'];
+    $amount = floatval($_POST['amount']);
     $description = $_POST['description'];
 
-    // Check if budget is set for the category
-    $budget_sql = "SELECT budget FROM budgets WHERE user_id = ? AND category = ?";
+    // Fetch the budget and total expenses for this category
+    $budget_sql = "
+        SELECT 
+            budgets.budget, 
+            IFNULL(SUM(expenses.amount), 0) AS total_expense 
+        FROM budgets 
+        LEFT JOIN expenses 
+        ON budgets.user_id = expenses.user_id AND budgets.category = expenses.category 
+        WHERE budgets.user_id = ? AND budgets.category = ?
+    ";
     $stmt = $conn->prepare($budget_sql);
     $stmt->bind_param("is", $user_id, $category);
     $stmt->execute();
@@ -41,15 +49,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $stmt->close();
 
     if ($budget_result->num_rows > 0) {
-        // Budget found, check if the expense is within the budget
-        $budget = $budget_result->fetch_assoc()['budget'];
-        if ($amount > $budget) {
-            $error_msg = "Expense amount exceeds the set budget for this category.";
+        $row = $budget_result->fetch_assoc();
+        $budget = floatval($row['budget']);
+        $total_expense = floatval($row['total_expense']);
+        $remaining_budget = $budget - $total_expense;
+
+        if ($amount > $remaining_budget) {
+            $error_msg = "The expense amount exceeds the remaining budget for the $category category.";
         } else {
-            // Insert expense if it's within the budget
+            // Insert expense if it's within the remaining budget
             $sql = "INSERT INTO expenses (user_id, category, amount, description) VALUES (?, ?, ?, ?)";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("isss", $user_id, $category, $amount, $description);
+            $stmt->bind_param("issd", $user_id, $category, $amount, $description);
 
             if ($stmt->execute()) {
                 $success_msg = "Expense added successfully.";
@@ -59,20 +70,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->close();
         }
     } else {
-        // No budget found for the selected category
         $error_msg = "Please set a budget for this category before adding an expense.";
     }
 }
 
 // Fetch expenses for this user
-$sql = "SELECT * FROM expenses WHERE user_id = ?";
+$sql = "SELECT * FROM expenses WHERE user_id = ? ORDER BY date DESC";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
 
-<?php include 'header.php'; ?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -85,22 +94,17 @@ $result = $stmt->get_result();
     <style>
         body {
             background-color: #F4F6F9;
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
         }
-
-        /* Sidebar Styling */
         .sidebar {
             position: fixed;
             top: 0;
             left: 0;
             width: 250px;
             height: 100%;
-            background-color: #AEC6D2; /* Sidebar color */
+            background-color: #AEC6D2;
             padding-top: 20px;
-            z-index: 1000;
-            transform: translateX(0); /* Always visible */
         }
-
         .sidebar a {
             display: block;
             padding: 12px;
@@ -108,225 +112,118 @@ $result = $stmt->get_result();
             text-decoration: none;
             font-size: 18px;
             margin-bottom: 20px;
-            transition: background-color 0.3s ease;
         }
-
         .sidebar a:hover {
-            background-color: #C1E2DB; /* Light blue */
+            background-color: #C1E2DB;
             border-radius: 5px;
         }
-
-        .sidebar i {
-            margin-right: 10px;
-        }
-
-        /* Content styling */
         .content {
             margin-left: 270px;
             padding: 30px;
         }
-
-        /* Card Styling */
         .card {
-            border-radius: 12px;
             padding: 30px;
+            background-color: #fff;
+            border-radius: 12px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            background-color: #FFFFFF;
             margin-bottom: 30px;
         }
-
         .btn-update {
-            background-color: #D3D3D3; /* Light gray button */
-            border-color: #D3D3D3;
             width: 100%;
+            background-color: #D3D3D3;
         }
-
         .btn-update:hover {
             background-color: #C8E6CF;
-            border-color: #C8E6CF;
         }
-
-        .summary-box {
-            text-align: center;
-            padding: 20px;
-            background-color: #E8F6EF;
-            border-radius: 12px;
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .summary-box h5 {
-            font-size: 18px;
-            color: #5A8A8B;
-        }
-
-        .summary-box p {
-            font-size: 22px;
-            font-weight: bold;
-            color: #2E8B57;
-        }
-
-        /* Mobile View */
-        @media (max-width: 768px) {
-            .content {
-                margin-left: 0;
-                padding: 15px;
-            }
-
-            /* Make the sidebar hideable */
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .sidebar.active {
-                transform: translateX(0);
-            }
-
-            .category-box {
-                width: 100%;
-                margin-bottom: 20px;
-            }
-
-            .charts-container {
-                flex-direction: column;
-            }
-
-            .chart-box {
-                width: 100%;
-                margin-bottom: 20px;
-            }
-
-            .navbar {
-                background-color: #AEC6D2;
-            }
-
-            .navbar-toggler {
-                border: none;
-            }
-
-            .navbar-brand {
-                color: white;
-                font-size: 20px;
-            }
+        #expensesTable {
+            display: none;
         }
     </style>
+    <script>
+        function toggleTable() {
+            const table = document.getElementById('expensesTable');
+            table.style.display = table.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
 </head>
 <body>
-
-<!-- Sidebar (Always visible on desktop, toggled on mobile) -->
-<div class="sidebar" id="mobileSidebar">
-    <h2 class="text-center text-white">Students Finance</h2>
-    <a href="profile.php"><i class="fas fa-user"></i> Profile</a>
-    <a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-    <a href="add_expense.php"><i class="fas fa-plus-circle"></i> Add Expense</a>
-    <a href="set_budget.php"><i class="fas fa-wallet"></i> Set Budget</a>
-    <a href="reports.php"><i class="fas fa-chart-line"></i> Reports</a>
-    <a href="login.php" class="text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
-</div>
-
-<!-- Mobile Navbar -->
-<nav class="navbar navbar-expand-lg navbar-light d-lg-none">
-    <div class="container-fluid">
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        
-    </div>
-</nav>
-
-<!-- Content -->
-<div class="content">
-    <!-- Add Expense Form -->
-    <div class="card">
-        <h2 class="text-center">Add Expense</h2>
-
-        <!-- Display success or error messages -->
-        <?php if (isset($success_msg)) echo "<div class='alert alert-success'>$success_msg</div>"; ?>
-        <?php if (isset($error_msg)) echo "<div class='alert alert-danger'>$error_msg</div>"; ?>
-
-        <form method="POST">
-            <!-- Category Field -->
-            <div class="mb-3">
-                <label for="category" class="form-label">Category</label>
-                <select class="form-control" id="category" name="category" required>
-                    <option value="Food">Food</option>
-                    <option value="Transportation">Transportation</option>
-                    <option value="Entertainment">Entertainment</option>
-                    <option value="Tuition">Tuition</option>
-                    <option value="Other">Other</option>
-                </select>
-            </div>
-
-            <!-- Amount Field -->
-            <div class="mb-3">
-                <label for="amount" class="form-label">Amount</label>
-                <input type="number" class="form-control" id="amount" name="amount" required>
-            </div>
-
-            <!-- Description Field -->
-            <div class="mb-3">
-                <label for="description" class="form-label">Description</label>
-                <input type="text" class="form-control" id="description" name="description" required>
-            </div>
-
-            <!-- Submit Button -->
-            <button type="submit" class="btn btn-update w-100">Add Expense</button>
-        </form>
+    <div class="sidebar">
+        <h2 class="text-center text-white">ZOi</h2>
+        <a href="profile.php"><i class="fas fa-user"></i> Profile</a>
+        <a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="add_expense.php"><i class="fas fa-plus-circle"></i> Add Expense</a>
+        <a href="set_budget.php"><i class="fas fa-wallet"></i> Set Budget</a>
+        <a href="reports.php"><i class="fas fa-chart-line"></i> Reports</a>
+        <a href="logout.php" class="text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
 
-    <!-- Toggle Button for Viewing Expenses -->
-    <div class="card">
-        <h2 class="text-center">View Expenses</h2>
-        <button class="btn btn-update w-100" data-bs-toggle="collapse" data-bs-target="#expenseTable" aria-expanded="false" aria-controls="expenseTable">
-            Toggle Expense Overview
-        </button>
+    <div class="content">
+        <div class="card">
+            <h2>Add Expense</h2>
+            <?php if (isset($success_msg)) echo "<div class='alert alert-success'>$success_msg</div>"; ?>
+            <?php if (isset($error_msg)) echo "<div class='alert alert-danger'>$error_msg</div>"; ?>
+            <?php if (isset($delete_msg)) echo "<div class='alert alert-info'>$delete_msg</div>"; ?>
 
-        <!-- Expense Table (Collapsible) -->
-        <div class="collapse mt-3" id="expenseTable">
-            <?php if ($result->num_rows > 0) { ?>
-                <table class="table table-striped table-hover">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Category</th>
-                            <th>Amount</th>
-                            <th>Description</th>
-                            <th>Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php while ($row = $result->fetch_assoc()) { ?>
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="category" class="form-label">Category</label>
+                    <select class="form-control" id="category" name="category" required>
+                        <option value="Food">Food</option>
+                        <option value="Transportation">Transportation</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Tuition">Tuition</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="amount" class="form-label">Amount</label>
+                    <input type="number" class="form-control" id="amount" name="amount" required>
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <input type="text" class="form-control" id="description" name="description" required>
+                </div>
+                <button type="submit" class="btn btn-update">Add Expense</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Expenses</h2>
+            <button class="btn btn-primary" onclick="toggleTable()">Show Expenses</button>
+            <div id="expensesTable">
+                <?php if ($result->num_rows > 0) { ?>
+                    <table class="table table-striped mt-3">
+                        <thead>
                             <tr>
-                                <td><?php echo htmlspecialchars($row['category']); ?></td>
-                                <td><?php echo htmlspecialchars($row['amount']); ?></td>
-                                <td><?php echo htmlspecialchars($row['description']); ?></td>
-                                <td><?php echo htmlspecialchars($row['date']); ?></td>
-                                <td>
-                                    <a href="add_expense.php?delete_expense_id=<?php echo $row['expense_id']; ?>" 
-                                       class="btn btn-danger btn-sm" 
-                                       onclick="return confirm('Are you sure you want to delete this expense?');">
-                                       <i class="fas fa-trash-alt"></i> Delete
-                                    </a>
-                                </td>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Description</th>
+                                <th>Date</th>
+                                <th>Actions</th>
                             </tr>
-                        <?php } ?>
-                    </tbody>
-                </table>
-            <?php } else { ?>
-                <p class="text-center text-muted">No expenses found.</p>
-            <?php } ?>
+                        </thead>
+                        <tbody>
+                            <?php while ($row = $result->fetch_assoc()) { ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($row['category']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['amount']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['description']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['date']); ?></td>
+                                    <td>
+                                        <a href="add_expense.php?delete_expense_id=<?php echo $row['expense_id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?');">
+                                            <i class="fas fa-trash-alt"></i> Delete
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php } ?>
+                        </tbody>
+                    </table>
+                <?php } else { ?>
+                    <p class="text-center text-muted mt-3">No expenses found.</p>
+                <?php } ?>
+            </div>
         </div>
     </div>
-</div>
-
-<!-- Bootstrap JS and dependencies -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-    // JS to handle mobile sidebar toggle
-    document.querySelector('.navbar-toggler').addEventListener('click', function() {
-        document.getElementById('mobileSidebar').classList.toggle('active');
-    });
-</script>
-
 </body>
 </html>
+
