@@ -161,10 +161,18 @@ $conn->close();
 
 <div class="login-container">
     <!-- Welcome Section -->
+    <div class="login-container">
+    <!-- Welcome Section -->
+    <div class="login-container">
+    <!-- Welcome Section -->
     <div class="welcome-section">
-        <h3>Welcome Back!</h3>
+        <h3>Welcome Back To ZOi!</h3>
         <p>Log in to manage your finances with ease. Track your expenses, set budgets, and gain control of your financial journey.</p>
         
+        <!-- Back Button -->
+        <a href="home page.html" class="btn btn-secondary mt-3" style="background-color: #D3D3D3; color: #000; border: none;">
+            <i class="fas fa-arrow-left"></i> Back to Home
+        </a>
     </div>
 
     <!-- Login Form Section -->
@@ -198,6 +206,9 @@ $conn->close();
         </div>
     </div>
 </div>
+
+</div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
