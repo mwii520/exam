@@ -14,7 +14,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">Personal Finance</a>
+            <a class="navbar-brand" href="#">ZOi</a>
             <div class="navbar-nav">
                 <!-- Notification Link -->
                 <a class="nav-item nav-link" href="notifications.php">
