@@ -160,7 +160,7 @@ if (isset($_GET['delete_notification'])) {
 <body>
     <!-- Sidebar -->
     <div class="sidebar">
-        <h2 class="text-center text-white">Notifications</h2>
+        <h2 class="text-center text-white">ZOi</h2>
         <a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
         <a href="profile.php"><i class="fas fa-user"></i> Profile</a>
         <a href="add_expense.php"><i class="fas fa-plus-circle"></i> Add Expense</a>
