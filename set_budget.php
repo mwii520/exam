@@ -196,13 +196,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
-        <h2 class="text-center text-white">Students Finance</h2>
+        <h2 class="text-center text-white">ZOi</h2>
         <a href="profile.php"><i class="fas fa-user"></i> Profile</a>
         <a href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
         <a href="add_expense.php"><i class="fas fa-plus-circle"></i> Add Expense</a>
         <a href="set_budget.php" class="active"><i class="fas fa-dollar-sign"></i> Set Budget</a>
         <a href="reports.php"><i class="fas fa-chart-line"></i> Reports</a>
-        <a href="logout.php" class="text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        <a href="login.php" class="text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
 
     <!-- Content -->
